@@ -546,25 +546,24 @@ other special keywords."
 
 (defun pocket-reader-add-tags (tags)
   "Add TAGS to current item."
-  (interactive (list (completing-read "Tags: " (pocket-reader--all-tags))))
-  (let* ((new-tags (s-split (rx (or space ",")) tags 'omit-nulls))
-         (new-tags-string (s-join "," new-tags)))
+  (interactive (list (completing-read-multiple "Tags: " (pocket-reader--all-tags))))
+  (let* ((new-tags-string (s-join "," tags)))
     (when (and new-tags-string
                (apply #'pocket-lib--tags-action 'tags_add new-tags-string
                       (pocket-reader--marked-or-current-items)))
       ;; Tags added successfully
       (pocket-reader--at-marked-or-current-items
-        (pocket-reader--add-tags new-tags)))))
+        (pocket-reader--add-tags tags)))))
 
 (defun pocket-reader-remove-tags (tags)
   "Remove TAGS from current item."
   ;; FIXME: Get all tags with a function.
-  (interactive (list (completing-read "Tags: " (let (tags)
-                                                 (pocket-reader--at-marked-or-current-items
-                                                   (setq tags (append (pocket-reader--get-property 'tags) tags)))
-                                                 (-sort #'string< (-uniq tags))))))
-  (let* ((tags (s-split (rx (or space ",")) tags 'omit-nulls))
-         (remove-tags-string (s-join "," tags)))
+  (interactive
+   (list (completing-read-multiple "Tags: " (let (tags)
+                                              (pocket-reader--at-marked-or-current-items
+                                                (setq tags (append (pocket-reader--get-property 'tags) tags)))
+                                              (-sort #'string< (-uniq tags))))))
+  (let* ((remove-tags-string (s-join "," tags)))
     (when (and remove-tags-string
                (apply #'pocket-lib--tags-action 'tags_remove remove-tags-string
                       (pocket-reader--marked-or-current-items)))
@@ -574,10 +573,9 @@ other special keywords."
 
 (defun pocket-reader-set-tags (tags)
   "Set TAGS of current item."
-  (interactive (list (completing-read "Tags: " (pocket-reader--all-tags))))
+  (interactive (list (completing-read-multiple "Tags: " (pocket-reader--all-tags))))
   (pocket-reader--with-pocket-reader-buffer
-    (let* ((tags (s-split (rx (or space ",")) tags 'omit-nulls))
-           (tags-string (s-join "," tags)))
+    (let* ((tags-string (s-join "," tags)))
       (when (apply #'pocket-lib--tags-action 'tags_replace tags-string (pocket-reader--marked-or-current-items))
         ;; Tags replaced successfully
         (pocket-reader--at-marked-or-current-items
@@ -1015,15 +1013,15 @@ no spacers will be inserted. "
   "Add TAGS to current item.
 TAGS should be a list of strings."
   (let* ((old-tags (pocket-reader--get-property 'tags))
-         (new-tags (append old-tags tags)))
-    (pocket-reader--set-tags new-tags)))
+         (tags (append old-tags tags)))
+    (pocket-reader--set-tags tags)))
 
 (defun pocket-reader--remove-tags (tags)
   "Remove TAGS from current item.
 TAGS should be a list of strings."
   (let* ((old-tags (pocket-reader--get-property 'tags))
-         (new-tags (seq-difference old-tags tags #'string=)))
-    (pocket-reader--set-tags new-tags)))
+         (tags (seq-difference old-tags tags #'string=)))
+    (pocket-reader--set-tags tags)))
 
 (defun pocket-reader--set-tags (tags)
   "Set current item's tags to TAGS.
